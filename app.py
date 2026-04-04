@@ -132,20 +132,75 @@ def load_model():
     MODEL_PATH = 'forecasting_ev_model.pkl'
     return load(MODEL_PATH)
 
-model = load_model()
+@st.cache_data
+def load_counties():
+    """Load all unique counties from the dataset and add international locations"""
+    try:
+        df = pd.read_csv('Electric_Vehicle_Population_Size_History_By_County_.csv')
+        counties = df['County'].dropna().unique()
+        counties_list = sorted([c for c in counties if isinstance(c, str)])
+        
+        # Add Indian states and major cities
+        indian_locations = [
+            'India - Delhi', 'India - Mumbai', 'India - Bangalore', 'India - Hyderabad',
+            'India - Chennai', 'India - Kolkata', 'India - Pune', 'India - Ahmedabad',
+            'India - Surat', 'India - Jaipur', 'India - Lucknow', 'India - Kanpur',
+            'India - Nagpur', 'India - Indore', 'India - Thane', 'India - Bhopal',
+            'India - Visakhapatnam', 'India - Pimpri-Chinchwad', 'India - Patna',
+            'India - Vadodara', 'India - Ghaziabad', 'India - Ludhiana', 'India - Agra',
+            'India - Nashik', 'India - Faridabad', 'India - Meerut', 'India - Rajkot',
+            'India - Kalyan-Dombivali', 'India - Vasai-Virar', 'India - Varanasi',
+            'India - Srinagar', 'India - Aurangabad', 'India - Dhanbad', 'India - Amritsar',
+            'India - Navi Mumbai', 'India - Allahabad', 'India - Ranchi', 'India - Howrah',
+            'India - Coimbatore', 'India - Jabalpur', 'India - Gwalior', 'India - Vijayawada',
+            'India - Jodhpur', 'India - Madurai', 'India - Raipur', 'India - Kota',
+            'India - Chandigarh', 'India - Guwahati', 'India - Solapur', 'India - Hubli-Dharwad',
+            'India - Mysore', 'India - Tiruchirappalli', 'India - Bareilly', 'India - Aligarh',
+            'India - Tiruppur', 'India - Moradabad', 'India - Jalandhar', 'India - Bhubaneswar',
+            'India - Salem', 'India - Warangal', 'India - Mira-Bhayandar', 'India - Thiruvananthapuram',
+            'India - Guntur', 'India - Bhiwandi', 'India - Saharanpur', 'India - Gorakhpur',
+            'India - Bikaner', 'India - Amravati', 'India - Noida', 'India - Jamshedpur',
+            'India - Bhilai', 'India - Cuttack', 'India - Firozabad', 'India - Kochi',
+            'India - Nellore', 'India - Bhavnagar', 'India - Dehradun', 'India - Durgapur',
+            'India - Asansol', 'India - Rourkela', 'India - Nanded', 'India - Kolhapur',
+            'India - Ajmer', 'India - Akola', 'India - Gulbarga', 'India - Jamnagar',
+            'India - Ujjain', 'India - Loni', 'India - Siliguri', 'India - Jhansi',
+            'India - Ulhasnagar', 'India - Jammu', 'India - Sangli-Miraj & Kupwad',
+            'India - Mangalore', 'India - Erode', 'India - Belgaum', 'India - Ambattur',
+            'India - Tirunelveli', 'India - Malegaon', 'India - Gaya', 'India - Jalgaon',
+            'India - Udaipur', 'India - Maheshtala'
+        ]
+        
+        # Add other international locations
+        international_locations = [
+            'China - Beijing', 'China - Shanghai', 'China - Shenzhen', 'China - Guangzhou',
+            'UK - London', 'UK - Manchester', 'UK - Birmingham', 'UK - Edinburgh',
+            'Germany - Berlin', 'Germany - Munich', 'Germany - Hamburg', 'Germany - Frankfurt',
+            'France - Paris', 'France - Lyon', 'France - Marseille',
+            'Japan - Tokyo', 'Japan - Osaka', 'Japan - Kyoto',
+            'Canada - Toronto', 'Canada - Vancouver', 'Canada - Montreal',
+            'Australia - Sydney', 'Australia - Melbourne', 'Australia - Brisbane',
+            'Norway - Oslo', 'Norway - Bergen',
+            'Netherlands - Amsterdam', 'Netherlands - Rotterdam',
+            'Sweden - Stockholm', 'Sweden - Gothenburg'
+        ]
+        
+        # Combine all locations
+        all_locations = counties_list + indian_locations + international_locations
+        all_locations_sorted = sorted(all_locations)
+        
+        # Create encoding dictionary
+        county_encoding = {location: idx for idx, location in enumerate(all_locations_sorted)}
+        return all_locations_sorted, county_encoding
+    except Exception as e:
+        # Fallback to default counties if file not found
+        default_counties = ['India - Delhi', 'India - Mumbai', 'India - Bangalore', 
+                          'King', 'Snohomish', 'Pierce', 'Spokane', 'Clark', 
+                          'Thurston', 'Kitsap', 'Whatcom', 'Benton', 'Yakima']
+        return default_counties, {county: idx for idx, county in enumerate(default_counties)}
 
-COUNTY_ENCODING = {
-    'King': 0,
-    'Snohomish': 1,
-    'Pierce': 2,
-    'Spokane': 3,
-    'Clark': 4,
-    'Thurston': 5,
-    'Kitsap': 6,
-    'Whatcom': 7,
-    'Benton': 8,
-    'Yakima': 9
-}
+model = load_model()
+COUNTIES_LIST, COUNTY_ENCODING = load_counties()
 
 FEATURE_NAMES = [
     'months_since_start',
@@ -242,7 +297,7 @@ def main():
     
     with col1:
         st.markdown("### 🗺️ Location & Date")
-        county = st.selectbox('Select County', options=list(COUNTY_ENCODING.keys()))
+        county = st.selectbox('Select County', options=COUNTIES_LIST)
         current_date = st.date_input('Current Date', value=datetime.now())
     
     with col2:
