@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EV Demand Prediction</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="src/css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚡ EV Demand Prediction</h1>
+            <p>Predict the next month's EV demand based on historical data. Get accurate forecasts to optimize your EV infrastructure planning and resource allocation.</p>
+        </div>
+
+        <div class="content-wrapper">
+            <!-- Input Form -->
+            <div class="card">
+                <h2>📋 Enter Data</h2>
+                <form id="predictionForm">
+                    <div class="form-group">
+                        <label for="county">🗺️ Select Location</label>
+                        <select id="county" name="county" required>
+                            <option value="">-- Select a location --</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="currentDate">📅 Current Date</label>
+                        <input type="date" id="currentDate" name="currentDate" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="currentEvTotal">📊 Current Number of EVs</label>
+                        <input type="number" id="currentEvTotal" name="currentEvTotal" 
+                               min="0" step="1" value="1000" required>
+                        <small>Current total number of electric vehicles</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>📈 Historical EV Data</label>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="evTotalLag1">EVs 1 Month Ago</label>
+                            <input type="number" id="evTotalLag1" name="evTotalLag1" 
+                                   min="0" step="1" value="900">
+                        </div>
+                        <div class="form-group">
+                            <label for="evTotalLag2">EVs 2 Months Ago</label>
+                            <input type="number" id="evTotalLag2" name="evTotalLag2" 
+                                   min="0" step="1" value="800">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="evTotalLag3">EVs 3 Months Ago</label>
+                        <input type="number" id="evTotalLag3" name="evTotalLag3" 
+                               min="0" step="1" value="700">
+                    </div>
+
+                    <button type="submit">🔮 Predict Next Month's EV Demand</button>
+                </form>
+            </div>
+
+            <!-- Results Container -->
+            <div id="resultsContainer" class="results-container" style="display: none;">
+                <!-- Results will be dynamically inserted here -->
+            </div>
+
+            <!-- Welcome Message (initial state) -->
+            <div id="welcomeCard" class="card">
+                <div class="success-message">
+                    <strong>👋 Welcome!</strong> Fill in the form on the left and click predict to get started.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="src/js/api.js"></script>
+    <script src="src/js/app.js"></script>
+</body>
+</html>
