@@ -63,13 +63,6 @@
             <artifactId>jackson-databind</artifactId>
         </dependency>
 
-        <!-- Model Serialization -->
-        <dependency>
-            <groupId>org.nd4j</groupId>
-            <artifactId>nd4j-native</artifactId>
-            <version>1.0.0-beta7</version>
-        </dependency>
-
         <!-- Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>

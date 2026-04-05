@@ -235,6 +235,3 @@ For questions about:
 
 ---
 
-**✅ Your project is now CI/CD-ready!** 🎉
-
-Start using it by pushing a commit or creating a pull request.
