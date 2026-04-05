@@ -1,0 +1,61 @@
+name: Pull Request Checks
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  pr-checks:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check PR title
+        uses: deepakputra/action-pr-title@master
+        with:
+          regex: '^(feat|fix|docs|style|refactor|test|chore)(\(.+\))?!?: .+'
+          allowed_prefixes: 'feat,fix,docs,style,refactor,test,chore'
+          disallowed_prefixes: 'WIP'
+
+      - name: Check for conventional commits
+        run: |
+          echo "Checking PR description for conventional commits..."
+          echo "${{ github.event.pull_request.body }}" | grep -E "^(feat|fix|docs|style|refactor|test|chore)" || echo "⚠️ Consider using conventional commits"
+
+      - name: Comment with PR guidelines
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const comment = `## PR Checklist ✅
+            
+            Thanks for your contribution! Please ensure:
+            
+            - [ ] Code follows project style guidelines
+            - [ ] All tests pass
+            - [ ] Code coverage doesn't decrease
+            - [ ] Documentation is updated
+            - [ ] Commit messages follow [conventional commits](https://www.conventionalcommits.org/)
+            - [ ] No merge conflicts
+            
+            **CI/CD Status:**
+            - Build and Test: [Check](${context.payload.pull_request.url})
+            - Code Coverage: [View Report](${context.payload.pull_request.url})
+            - Security Scans: [Review](${context.payload.pull_request.url})`;
+            
+            try {
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: comment
+              });
+            } catch(e) {
+              console.log('Comment already exists');
+            }

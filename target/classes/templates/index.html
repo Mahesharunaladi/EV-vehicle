@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EV Demand Prediction</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+            color: #333333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            padding: 3rem 2rem;
+            border-radius: 15px;
+            color: #1e293b;
+            margin-bottom: 2rem;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin-bottom: 1rem;
+            color: #1e293b;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            color: #475569;
+            line-height: 1.6;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .content-wrapper {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            color: #333333;
+        }
+
+        .card h2 {
+            color: #1e3a8a;
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            color: #1f2937;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 1rem;
+            color: #1f2937;
+            background-color: white;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #0077b6;
+            box-shadow: 0 0 0 3px rgba(0, 119, 182, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .form-row.full {
+            grid-template-columns: 1fr;
+        }
+
+        button {
+            width: 100%;
+            padding: 0.8rem;
+            background: linear-gradient(45deg, #00b4d8, #0077b6);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .result-card {
+            background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 2rem;
+            grid-column: 1 / -1;
+            box-shadow: 0 10px 30px rgba(30, 64, 175, 0.2);
+        }
+
+        .result-card h3 {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            opacity: 0.9;
+        }
+
+        .prediction-value {
+            font-size: 3rem;
+            font-weight: bold;
+            margin: 1rem 0;
+        }
+
+        .prediction-change {
+            font-size: 1.2rem;
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .prediction-change.positive {
+            color: #4ade80;
+        }
+
+        .prediction-change.negative {
+            color: #f87171;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .feature-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.2rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            color: #333333;
+        }
+
+        .feature-card-title {
+            color: #4b5563;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .feature-card-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1e40af;
+        }
+
+        .error-message {
+            background-color: #fee2e2;
+            color: #991b1b;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            border-left: 4px solid #dc2626;
+        }
+
+        .success-message {
+            background-color: #dcfce7;
+            color: #166534;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            border-left: 4px solid #22c55e;
+        }
+
+        @media (max-width: 768px) {
+            .content-wrapper {
+                grid-template-columns: 1fr;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚡ EV Demand Prediction</h1>
+            <p>Predict the next month's EV demand based on historical data. Get accurate forecasts to optimize your EV infrastructure planning and resource allocation.</p>
+        </div>
+
+        <div class="content-wrapper">
+            <!-- Input Form -->
+            <div class="card">
+                <h2>📋 Enter Data</h2>
+                <form method="POST" action="/predict">
+                    <div class="form-group">
+                        <label for="county">🗺️ Select Location</label>
+                        <select id="county" name="county" required th:value="${predictionInput?.county}">
+                            <option value="">-- Select a location --</option>
+                            <option th:each="location : ${locations}" 
+                                    th:value="${location}" 
+                                    th:text="${location}"
+                                    th:selected="${predictionInput?.county == location}">
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="currentDate">📅 Current Date</label>
+                        <input type="date" id="currentDate" name="currentDate" 
+                               th:value="${#dates.format(currentDate, 'yyyy-MM-dd')}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="currentEvTotal">📊 Current Number of EVs</label>
+                        <input type="number" id="currentEvTotal" name="currentEvTotal" 
+                               min="0" step="1" value="1000" 
+                               th:value="${predictionInput?.currentEvTotal}" required>
+                        <small>Current total number of electric vehicles</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>📈 Historical EV Data</label>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="evTotalLag1">EVs 1 Month Ago</label>
+                            <input type="number" id="evTotalLag1" name="evTotalLag1" 
+                                   min="0" step="1" value="900"
+                                   th:value="${predictionInput?.evTotalLag1}">
+                        </div>
+                        <div class="form-group">
+                            <label for="evTotalLag2">EVs 2 Months Ago</label>
+                            <input type="number" id="evTotalLag2" name="evTotalLag2" 
+                                   min="0" step="1" value="800"
+                                   th:value="${predictionInput?.evTotalLag2}">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="evTotalLag3">EVs 3 Months Ago</label>
+                        <input type="number" id="evTotalLag3" name="evTotalLag3" 
+                               min="0" step="1" value="700"
+                               th:value="${predictionInput?.evTotalLag3}">
+                    </div>
+
+                    <button type="submit">🔮 Predict Next Month's EV Demand</button>
+                </form>
+            </div>
+
+            <!-- Results Card -->
+            <div th:if="${result != null}">
+                <div th:if="${result.success}">
+                    <div class="card result-card">
+                        <h2>🚀 Prediction Result</h2>
+                        <h3>Predicted EV Total for Next Month</h3>
+                        <div class="prediction-value" th:text="${#numbers.formatInteger(result.prediction, 0)}">
+                        </div>
+                        <div class="prediction-change" 
+                             th:classappend="${result.prediction > predictionInput.currentEvTotal ? 'positive' : 'negative'}">
+                            <span th:if="${result.prediction > predictionInput.currentEvTotal}">
+                                📈 ↑ +<span th:text="${#numbers.formatInteger(result.prediction - predictionInput.currentEvTotal, 0)}"></span> from current
+                            </span>
+                            <span th:if="${result.prediction <= predictionInput.currentEvTotal}">
+                                📉 ↓ <span th:text="${#numbers.formatInteger(predictionInput.currentEvTotal - result.prediction, 0)}"></span> from current
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h2>📊 Detailed Analysis</h2>
+                        <div class="features-grid">
+                            <div class="feature-card" th:each="feature : ${result.features.entrySet()}">
+                                <div class="feature-card-title" th:text="${feature.key.replace('_', ' ').toUpperCase()}"></div>
+                                <div class="feature-card-value" th:text="${#numbers.formatDecimal(feature.value, 1, 2)}"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div th:if="${!result.success}" class="card">
+                    <div class="error-message">
+                        <strong>Error:</strong> <span th:text="${result.error}"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div th:if="${result == null}" class="card" style="grid-column: 2;">
+                <div class="success-message">
+                    <strong>👋 Welcome!</strong> Fill in the form on the left and click predict to get started.
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
