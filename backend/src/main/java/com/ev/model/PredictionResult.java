@@ -1,10 +1,11 @@
 package com.ev.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.util.Map;
 
-
+/**
+ * EV Demand Prediction Result DTO
+ */
 public class PredictionResult {
     @JsonProperty("prediction")
     private double prediction;
@@ -19,7 +20,8 @@ public class PredictionResult {
     private boolean success;
 
     // Constructors
-    public PredictionResult() {}
+    public PredictionResult() {
+    }
 
     public PredictionResult(double prediction, Map<String, Double> features, String error, boolean success) {
         this.prediction = prediction;
@@ -28,40 +30,41 @@ public class PredictionResult {
         this.success = success;
     }
 
-    // Getters and Setters
+    // Getters
     public double getPrediction() {
         return prediction;
-    }
-
-    public void setPrediction(double prediction) {
-        this.prediction = prediction;
     }
 
     public Map<String, Double> getFeatures() {
         return features;
     }
 
-    public void setFeatures(Map<String, Double> features) {
-        this.features = features;
-    }
-
     public String getError() {
         return error;
-    }
-
-    public void setError(String error) {
-        this.error = error;
     }
 
     public boolean isSuccess() {
         return success;
     }
 
+    // Setters
+    public void setPrediction(double prediction) {
+        this.prediction = prediction;
+    }
+
+    public void setFeatures(Map<String, Double> features) {
+        this.features = features;
+    }
+
+    public void setError(String error) {
+        this.error = error;
+    }
+
     public void setSuccess(boolean success) {
         this.success = success;
     }
 
-    // Builder pattern
+    // Builder Pattern
     public static PredictionResultBuilder builder() {
         return new PredictionResultBuilder();
     }
@@ -97,3 +100,4 @@ public class PredictionResult {
         }
     }
 }
+
