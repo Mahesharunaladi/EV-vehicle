@@ -4,7 +4,7 @@ import com.ev.model.PredictionInput;
 import com.ev.model.PredictionResult;
 import com.ev.service.LocationService;
 import com.ev.service.PredictionService;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,10 +16,12 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api")
-@RequiredArgsConstructor
 public class PredictionApiController {
-    private final PredictionService predictionService;
-    private final LocationService locationService;
+    @Autowired
+    private PredictionService predictionService;
+
+    @Autowired
+    private LocationService locationService;
 
     /**
      * Get all available locations

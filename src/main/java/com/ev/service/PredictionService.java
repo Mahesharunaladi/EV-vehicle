@@ -2,10 +2,10 @@ package com.ev.service;
 
 import com.ev.model.PredictionInput;
 import com.ev.model.PredictionResult;
-import lombok.RequiredArgsConstructor;
 import org.apache.commons.math3.stat.regression.SimpleRegression;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -16,7 +16,6 @@ import java.util.*;
  * Service for EV demand prediction
  */
 @Service
-@RequiredArgsConstructor
 public class PredictionService {
     private static final Logger logger = LoggerFactory.getLogger(PredictionService.class);
     private static final String[] FEATURE_NAMES = {
@@ -31,8 +30,11 @@ public class PredictionService {
             "ev_growth_slope"
     };
 
-    private final LocationService locationService;
-    private final ModelService modelService;
+    @Autowired
+    private LocationService locationService;
+
+    @Autowired
+    private ModelService modelService;
 
     /**
      * Predict EV demand for next month
