@@ -1,0 +1,10 @@
+com/ev/service/LocationService.class
+com/ev/service/ModelService.class
+com/ev/config/WebConfig.class
+com/ev/prediction/EVDemandPredictionApplication.class
+com/ev/model/PredictionInput.class
+com/ev/model/PredictionResult.class
+com/ev/controller/PredictionController.class
+com/ev/model/PredictionResult$Builder.class
+com/ev/api/PredictionApiController.class
+com/ev/service/PredictionService.class
