@@ -3,80 +3,114 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EV Demand Prediction</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>EV Demand Prediction System</title>
     <link rel="stylesheet" href="src/css/styles.css">
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1>⚡ EV Demand Prediction</h1>
-            <p>Predict the next month's EV demand based on historical data. Get accurate forecasts to optimize your EV infrastructure planning and resource allocation.</p>
-        </div>
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1>🔋 EV Demand Prediction System</h1>
+                <p>Advanced Electric Vehicle Adoption Forecasting</p>
+            </div>
+        </header>
 
-        <div class="content-wrapper">
-            <!-- Input Form -->
-            <div class="card">
-                <h2>📋 Enter Data</h2>
-                <form id="predictionForm">
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Left Section - Form -->
+            <section class="form-section">
+                <h2>Prediction Input</h2>
+                <form id="predictionForm" class="prediction-form">
+                    <!-- Location Selection -->
                     <div class="form-group">
-                        <label for="county">🗺️ Select Location</label>
-                        <select id="county" name="county" required>
-                            <option value="">-- Select a location --</option>
+                        <label for="location">Location</label>
+                        <select id="location" name="location" required>
+                            <option value="">Select a location...</option>
                         </select>
+                        <small>Choose your region for prediction</small>
                     </div>
 
+                    <!-- Date Selection -->
                     <div class="form-group">
-                        <label for="currentDate">📅 Current Date</label>
+                        <label for="currentDate">Prediction Date</label>
                         <input type="date" id="currentDate" name="currentDate" required>
+                        <small>Select the date for prediction</small>
                     </div>
 
+                    <!-- Current EV Total -->
                     <div class="form-group">
-                        <label for="currentEvTotal">📊 Current Number of EVs</label>
-                        <input type="number" id="currentEvTotal" name="currentEvTotal" 
-                               min="0" step="1" value="1000" required>
-                        <small>Current total number of electric vehicles</small>
+                        <label for="currentEvTotal">Current EV Total</label>
+                        <input type="number" id="currentEvTotal" name="currentEvTotal" min="0" step="1" placeholder="e.g., 10000" required>
+                        <small>Total number of EVs in the region</small>
                     </div>
 
+                    <!-- EV Total Lag 1 -->
                     <div class="form-group">
-                        <label>📈 Historical EV Data</label>
+                        <label for="evTotalLag1">EV Total Lag (Month -1)</label>
+                        <input type="number" id="evTotalLag1" name="evTotalLag1" min="0" step="1" placeholder="e.g., 9500" required>
+                        <small>EV total from 1 month ago</small>
                     </div>
 
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="evTotalLag1">EVs 1 Month Ago</label>
-                            <input type="number" id="evTotalLag1" name="evTotalLag1" 
-                                   min="0" step="1" value="900">
-                        </div>
-                        <div class="form-group">
-                            <label for="evTotalLag2">EVs 2 Months Ago</label>
-                            <input type="number" id="evTotalLag2" name="evTotalLag2" 
-                                   min="0" step="1" value="800">
-                        </div>
-                    </div>
-
+                    <!-- EV Total Lag 2 -->
                     <div class="form-group">
-                        <label for="evTotalLag3">EVs 3 Months Ago</label>
-                        <input type="number" id="evTotalLag3" name="evTotalLag3" 
-                               min="0" step="1" value="700">
+                        <label for="evTotalLag2">EV Total Lag (Month -2)</label>
+                        <input type="number" id="evTotalLag2" name="evTotalLag2" min="0" step="1" placeholder="e.g., 9000" required>
+                        <small>EV total from 2 months ago</small>
                     </div>
 
-                    <button type="submit">🔮 Predict Next Month's EV Demand</button>
+                    <!-- EV Total Lag 3 -->
+                    <div class="form-group">
+                        <label for="evTotalLag3">EV Total Lag (Month -3)</label>
+                        <input type="number" id="evTotalLag3" name="evTotalLag3" min="0" step="1" placeholder="e.g., 8500" required>
+                        <small>EV total from 3 months ago</small>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">🚀 Generate Prediction</button>
+                        <button type="reset" class="btn btn-secondary">🔄 Clear Form</button>
+                    </div>
+
+                    <!-- Loading Indicator -->
+                    <div id="loadingIndicator" class="loading-hidden">
+                        <div class="spinner"></div>
+                        <p>Processing prediction...</p>
+                    </div>
+
+                    <!-- Error Message -->
+                    <div id="errorMessage" class="alert alert-error hidden"></div>
                 </form>
-            </div>
+            </section>
 
-            <!-- Results Container -->
-            <div id="resultsContainer" class="results-container" style="display: none;">
-                <!-- Results will be dynamically inserted here -->
-            </div>
-
-            <!-- Welcome Message (initial state) -->
-            <div id="welcomeCard" class="card">
-                <div class="success-message">
-                    <strong>👋 Welcome!</strong> Fill in the form on the left and click predict to get started.
+            <!-- Right Section - Results -->
+            <section class="results-section">
+                <h2>Prediction Results</h2>
+                <div id="resultsContainer" class="results-container">
+                    <div class="empty-state">
+                        <p>📊 Fill out the form and submit to see predictions</p>
+                    </div>
                 </div>
-            </div>
-        </div>
+
+                <!-- Feature Breakdown -->
+                <div id="featuresContainer" class="features-container hidden">
+                    <h3>Feature Breakdown</h3>
+                    <div id="featuresGrid" class="features-grid"></div>
+                </div>
+
+                <!-- Analysis Section -->
+                <div id="analysisContainer" class="analysis-container hidden">
+                    <h3>Market Analysis</h3>
+                    <div id="analysisContent" class="analysis-content"></div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>&copy; 2026 EV Demand Prediction System. All rights reserved.</p>
+            <p>Backend API: <span id="apiStatus" class="status-badge">Checking...</span></p>
+        </footer>
     </div>
 
     <script src="src/js/api.js"></script>

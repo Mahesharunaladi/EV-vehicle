@@ -4,11 +4,22 @@
 
 class EVPredictionApp {
     constructor() {
+        // Form elements
         this.form = document.getElementById('predictionForm');
-        this.countySelect = document.getElementById('county');
+        this.locationSelect = document.getElementById('location');
+        this.currentDateInput = document.getElementById('currentDate');
+        this.currentEvTotalInput = document.getElementById('currentEvTotal');
+        this.evTotalLag1Input = document.getElementById('evTotalLag1');
+        this.evTotalLag2Input = document.getElementById('evTotalLag2');
+        this.evTotalLag3Input = document.getElementById('evTotalLag3');
+
+        // Result elements
         this.resultsContainer = document.getElementById('resultsContainer');
-        this.welcomeCard = document.getElementById('welcomeCard');
-        this.currentDate = document.getElementById('currentDate');
+        this.featuresContainer = document.getElementById('featuresContainer');
+        this.analysisContainer = document.getElementById('analysisContainer');
+        this.loadingIndicator = document.getElementById('loadingIndicator');
+        this.errorMessage = document.getElementById('errorMessage');
+        this.apiStatus = document.getElementById('apiStatus');
 
         this.init();
     }
@@ -17,14 +28,29 @@ class EVPredictionApp {
      * Initialize the application
      */
     async init() {
-        // Set today's date as default
         this.setDefaultDate();
-
-        // Load locations
+        await this.checkApiStatus();
         await this.loadLocations();
-
-        // Attach event listeners
         this.attachEventListeners();
+    }
+
+    /**
+     * Check backend API status
+     */
+    async checkApiStatus() {
+        try {
+            const response = await fetch('http://localhost:8080/api/health');
+            if (response.ok) {
+                this.apiStatus.textContent = '🟢 Online';
+                this.apiStatus.classList.add('online');
+            } else {
+                this.apiStatus.textContent = '🔴 Error';
+                this.apiStatus.classList.add('offline');
+            }
+        } catch (error) {
+            this.apiStatus.textContent = '🔴 Offline';
+            this.apiStatus.classList.add('offline');
+        }
     }
 
     /**
@@ -35,7 +61,7 @@ class EVPredictionApp {
         const year = today.getFullYear();
         const month = String(today.getMonth() + 1).padStart(2, '0');
         const day = String(today.getDate()).padStart(2, '0');
-        this.currentDate.value = `${year}-${month}-${day}`;
+        this.currentDateInput.value = `${year}-${month}-${day}`;
     }
 
     /**
@@ -47,7 +73,7 @@ class EVPredictionApp {
             this.populateLocationSelect(locations);
         } catch (error) {
             console.error('Failed to load locations:', error);
-            this.showError('Failed to load locations. Please try again later.');
+            this.showError('Failed to load locations. Please refresh the page.');
         }
     }
 
@@ -55,12 +81,12 @@ class EVPredictionApp {
      * Populate the location select dropdown
      */
     populateLocationSelect(locations) {
-        this.countySelect.innerHTML = '<option value="">-- Select a location --</option>';
+        this.locationSelect.innerHTML = '<option value="">Select a location...</option>';
         locations.forEach(location => {
             const option = document.createElement('option');
             option.value = location;
             option.textContent = location;
-            this.countySelect.appendChild(option);
+            this.locationSelect.appendChild(option);
         });
     }
 
@@ -89,11 +115,16 @@ class EVPredictionApp {
      * Validate form inputs
      */
     validateForm() {
-        const county = this.countySelect.value.trim();
-        const currentDate = this.currentDate.value;
-        const currentEvTotal = document.getElementById('currentEvTotal').value;
+        const location = this.locationSelect.value.trim();
+        const currentDate = this.currentDateInput.value;
+        const currentEvTotal = this.currentEvTotalInput.value;
+        const evTotalLag1 = this.evTotalLag1Input.value;
+        const evTotalLag2 = this.evTotalLag2Input.value;
+        const evTotalLag3 = this.evTotalLag3Input.value;
 
-        if (!county) {
+        this.clearError();
+
+        if (!location) {
             this.showError('Please select a location');
             return false;
         }
@@ -103,8 +134,23 @@ class EVPredictionApp {
             return false;
         }
 
-        if (!currentEvTotal || parseInt(currentEvTotal) < 0) {
-            this.showError('Please enter a valid current EV count');
+        if (!currentEvTotal || isNaN(currentEvTotal) || currentEvTotal < 0) {
+            this.showError('Please enter a valid current EV total');
+            return false;
+        }
+
+        if (!evTotalLag1 || isNaN(evTotalLag1) || evTotalLag1 < 0) {
+            this.showError('Please enter a valid EV total for lag 1');
+            return false;
+        }
+
+        if (!evTotalLag2 || isNaN(evTotalLag2) || evTotalLag2 < 0) {
+            this.showError('Please enter a valid EV total for lag 2');
+            return false;
+        }
+
+        if (!evTotalLag3 || isNaN(evTotalLag3) || evTotalLag3 < 0) {
+            this.showError('Please enter a valid EV total for lag 3');
             return false;
         }
 
@@ -116,168 +162,169 @@ class EVPredictionApp {
      */
     getFormData() {
         return {
-            county: document.getElementById('county').value,
-            currentDate: document.getElementById('currentDate').value,
-            currentEvTotal: parseInt(document.getElementById('currentEvTotal').value),
-            evTotalLag1: parseInt(document.getElementById('evTotalLag1').value) || 0,
-            evTotalLag2: parseInt(document.getElementById('evTotalLag2').value) || 0,
-            evTotalLag3: parseInt(document.getElementById('evTotalLag3').value) || 0,
+            county: this.locationSelect.value.trim(),
+            currentDate: this.currentDateInput.value,
+            currentEvTotal: parseInt(this.currentEvTotalInput.value),
+            evTotalLag1: parseInt(this.evTotalLag1Input.value),
+            evTotalLag2: parseInt(this.evTotalLag2Input.value),
+            evTotalLag3: parseInt(this.evTotalLag3Input.value)
         };
     }
 
     /**
-     * Submit prediction request
+     * Submit prediction to API
      */
     async submitPrediction(data) {
+        this.showLoading();
+        this.clearError();
+
         try {
-            // Show loading state
-            this.setFormLoading(true);
-
-            // Make API call
             const result = await ApiService.predict(data);
-
-            // Hide welcome card
-            this.welcomeCard.style.display = 'none';
-
-            // Display results
             this.displayResults(result, data);
         } catch (error) {
             console.error('Prediction failed:', error);
-            this.showError('Prediction failed. Please check your input and try again.');
+            this.showError(`Prediction failed: ${error.message}`);
         } finally {
-            // Hide loading state
-            this.setFormLoading(false);
+            this.hideLoading();
         }
     }
 
     /**
      * Display prediction results
      */
-    displayResults(result, inputData) {
+    displayResults(result, data) {
+        if (!result.success) {
+            this.showError(result.error || 'Prediction failed');
+            return;
+        }
+
+        const prediction = result.prediction;
+        const features = result.features || {};
+
+        // Clear previous results
         this.resultsContainer.innerHTML = '';
-        this.resultsContainer.style.display = 'block';
 
-        if (result.success) {
-            // Show result card
-            const resultCard = this.createResultCard(result, inputData);
-            this.resultsContainer.appendChild(resultCard);
-
-            // Show features analysis
-            const featuresCard = this.createFeaturesCard(result);
-            this.resultsContainer.appendChild(featuresCard);
-
-            this.resultsContainer.classList.remove('full-width');
-        } else {
-            // Show error
-            this.resultsContainer.innerHTML = `
-                <div class="card">
-                    <div class="error-message">
-                        <strong>Error:</strong> ${result.error || 'An error occurred during prediction'}
+        // Create results card
+        const resultHtml = `
+            <div class="prediction-result">
+                <div class="result-header">
+                    <h3>📊 Prediction Result</h3>
+                </div>
+                <div class="prediction-value">
+                    ${Math.round(prediction).toLocaleString()} EVs
+                </div>
+                <div class="prediction-metadata">
+                    <div class="metadata-item">
+                        <div class="metadata-label">Location</div>
+                        <div class="metadata-value">${data.county}</div>
+                    </div>
+                    <div class="metadata-item">
+                        <div class="metadata-label">Prediction Date</div>
+                        <div class="metadata-value">${data.currentDate}</div>
+                    </div>
+                    <div class="metadata-item">
+                        <div class="metadata-label">Current Total</div>
+                        <div class="metadata-value">${data.currentEvTotal.toLocaleString()}</div>
+                    </div>
+                    <div class="metadata-item">
+                        <div class="metadata-label">Growth</div>
+                        <div class="metadata-value">${(((prediction - data.currentEvTotal) / data.currentEvTotal) * 100).toFixed(2)}%</div>
                     </div>
                 </div>
-            `;
-            this.resultsContainer.classList.add('full-width');
-        }
-    }
-
-    /**
-     * Create result card HTML
-     */
-    createResultCard(result, inputData) {
-        const card = document.createElement('div');
-        card.className = 'card result-card';
-
-        const prediction = Math.round(result.prediction);
-        const current = inputData.currentEvTotal;
-        const change = prediction - current;
-        const isPositive = change >= 0;
-
-        card.innerHTML = `
-            <h2>🚀 Prediction Result</h2>
-            <h3>Predicted EV Total for Next Month</h3>
-            <div class="prediction-value">${this.formatNumber(prediction)}</div>
-            <div class="prediction-change ${isPositive ? 'positive' : 'negative'}">
-                ${isPositive ? '📈 ↑' : '📉 ↓'}
-                <span>${isPositive ? '+' : '-'}${this.formatNumber(Math.abs(change))}</span>
-                <span>from current</span>
             </div>
         `;
 
-        return card;
+        this.resultsContainer.innerHTML = resultHtml;
+
+        // Display feature breakdown
+        if (Object.keys(features).length > 0) {
+            this.displayFeatures(features);
+        }
+
+        // Display analysis
+        this.displayAnalysis(prediction, data);
     }
 
     /**
-     * Create features analysis card HTML
+     * Display feature breakdown
      */
-    createFeaturesCard(result) {
-        const card = document.createElement('div');
-        card.className = 'card';
+    displayFeatures(features) {
+        this.featuresContainer.classList.remove('hidden');
+        const featuresGrid = document.getElementById('featuresGrid');
+        featuresGrid.innerHTML = '';
 
-        let featuresHTML = '<h2>📊 Detailed Analysis</h2><div class="features-grid">';
+        Object.entries(features).forEach(([name, value]) => {
+            const featureHtml = `
+                <div class="feature-item">
+                    <div class="feature-name">${name}</div>
+                    <div class="feature-value">${typeof value === 'number' ? value.toFixed(2) : value}</div>
+                </div>
+            `;
+            featuresGrid.innerHTML += featureHtml;
+        });
+    }
 
-        if (result.features && typeof result.features === 'object') {
-            for (const [key, value] of Object.entries(result.features)) {
-                const formattedKey = key.replace(/_/g, ' ').toUpperCase();
-                const formattedValue = typeof value === 'number' ? value.toFixed(2) : value;
+    /**
+     * Display market analysis
+     */
+    displayAnalysis(prediction, data) {
+        this.analysisContainer.classList.remove('hidden');
+        const analysisContent = document.getElementById('analysisContent');
 
-                featuresHTML += `
-                    <div class="feature-card">
-                        <div class="feature-card-title">${formattedKey}</div>
-                        <div class="feature-card-value">${formattedValue}</div>
-                    </div>
-                `;
-            }
+        const growth = prediction - data.currentEvTotal;
+        const growthPercent = ((growth / data.currentEvTotal) * 100).toFixed(2);
+        const trend = growth > 0 ? '📈 Positive' : growth < 0 ? '📉 Negative' : '➡️ Neutral';
+
+        let analysis = `
+            <p><strong>Market Trend:</strong> ${trend}</p>
+            <p><strong>Expected Growth:</strong> ${Math.round(growth).toLocaleString()} vehicles (${growthPercent}%)</p>
+        `;
+
+        if (growthPercent > 10) {
+            analysis += `<p>The market shows strong growth potential in ${data.county}.</p>`;
+        } else if (growthPercent > 0) {
+            analysis += `<p>The market shows moderate growth in ${data.county}.</p>`;
+        } else if (growthPercent === '0.00') {
+            analysis += `<p>The market is expected to remain stable in ${data.county}.</p>`;
+        } else {
+            analysis += `<p>The market may experience a slight decline in ${data.county}.</p>`;
         }
 
-        featuresHTML += '</div>';
-        card.innerHTML = featuresHTML;
+        analysisContent.innerHTML = analysis;
+    }
 
-        return card;
+    /**
+     * Show loading indicator
+     */
+    showLoading() {
+        this.loadingIndicator.classList.add('show');
+    }
+
+    /**
+     * Hide loading indicator
+     */
+    hideLoading() {
+        this.loadingIndicator.classList.remove('show');
     }
 
     /**
      * Show error message
      */
     showError(message) {
-        this.welcomeCard.style.display = 'block';
-        this.resultsContainer.style.display = 'none';
-
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'error-message';
-        errorDiv.innerHTML = `<strong>Error:</strong> ${message}`;
-
-        const formCard = document.querySelector('.card');
-        formCard.insertBefore(errorDiv, formCard.firstChild);
-
-        // Remove error after 5 seconds
-        setTimeout(() => {
-            errorDiv.remove();
-        }, 5000);
+        this.errorMessage.textContent = `❌ ${message}`;
+        this.errorMessage.classList.remove('hidden');
     }
 
     /**
-     * Set form loading state
+     * Clear error message
      */
-    setFormLoading(isLoading) {
-        const button = this.form.querySelector('button[type="submit"]');
-        button.disabled = isLoading;
-
-        if (isLoading) {
-            button.innerHTML = '<span class="loading"></span> Predicting...';
-        } else {
-            button.innerHTML = '🔮 Predict Next Month\'s EV Demand';
-        }
-    }
-
-    /**
-     * Format number for display
-     */
-    formatNumber(num) {
-        return num.toLocaleString('en-US');
+    clearError() {
+        this.errorMessage.textContent = '';
+        this.errorMessage.classList.add('hidden');
     }
 }
 
-// Initialize app when DOM is ready
+// Initialize the application when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-    window.app = new EVPredictionApp();
+    new EVPredictionApp();
 });
